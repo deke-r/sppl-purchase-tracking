@@ -5,6 +5,19 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const authenticate=require('../middleware/auth');
+const multer=require('multer');
+const path=require('path')
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/')
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext)
+  }
+});
+const upload = multer({ storage: storage })
 
 const currentTimestamp = moment().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss');
 
@@ -15,7 +28,7 @@ const User = require('../models/User');
 const ProjectManager=require('../models/ProjectManager');
 const MaterialRequest=require('../models/MaterialRequest');
 const MaterialRequestItem=require('../models/MaterialRequestItem');
-
+const { Op } = require('sequelize');
 
 router.post('/register', async (req, res) => {
     const { name, email, pass, role, department } = req.body;
@@ -118,34 +131,27 @@ router.get('/managers',authenticate,async(req,res)=>{
 
 router.post('/material-request', authenticate, async (req, res) => {
     try {
-      // Destructuring the incoming request body
       const {
         projectDetails,
         sheetNo,
         requirementDate,
         deliveryPlace,
-        managers, // Array of manager objects with 'value' and 'label' properties
+        managers, 
         materials, 
       } = req.body;
   
-      // Log the request body for debugging
       console.log('req.body: ', req.body);
   
-      // Log the manager emails joined by comma to verify
       console.log(managers.map(manager => manager.value).join(','));
   
-      // Retrieve the user ID (assumes the user is authenticated and `req.user` is populated)
       let userId = req.user.id;
   
-      // Get the last ticket ID to generate the next one
       const lastRequest = await MaterialRequest.findOne({
         order: [['ticket_id', 'DESC']],
       });
   
-      // Set the next ticket ID
       const nextTicketId = lastRequest ? lastRequest.ticket_id + 1 : 1000;
   
-      // Create the material request
       const newRequest = await MaterialRequest.create({
         ticket_id: nextTicketId,
         user_id: userId,
@@ -153,22 +159,22 @@ router.post('/material-request', authenticate, async (req, res) => {
         sheet_no: sheetNo,
         requirement_date: requirementDate,
         delivery_place: deliveryPlace,
-        manager_emails: managers.map(m => m.value).join(','), // Extract emails using 'value' and join them
+        manager_emails: managers.map(m => m.value).join(','),
         status: 1,
         status_track: 'Sent to management',
         last_updated: new Date(),
       });
   
-      // Create associated material items
+
       const itemInserts = materials.map((item) => ({
         ...item,
         ticket_id: nextTicketId,
       }));
   
-      // Insert material items into the MaterialRequestItem table
+
       await MaterialRequestItem.bulkCreate(itemInserts);
   
-      // Return a success response with the ticket ID
+
       res.status(201).json({
         success: true,
         ticket_id: nextTicketId,
@@ -181,30 +187,83 @@ router.post('/material-request', authenticate, async (req, res) => {
     }
   });
 
+
+
   router.get('/materials', authenticate, async (req, res) => {
     try {
       const { status } = req.query;
   
-      if (status && !['0', '1'].includes(status)) {
-        return res.status(400).json({ message: 'Invalid status parameter' });
+      let whereClause = {};
+  
+      if (status) {
+        const statusArray = status.split(',').map(Number);
+        whereClause.status = {
+          [Op.in]: statusArray,
+        };
       }
   
       const materials = await MaterialRequest.findAll({
-        where: {
-          ...(status && { status: status }), 
-        },
+        where: whereClause,
       });
   
       if (materials.length === 0) {
         return res.status(404).json({ message: 'No materials found for the given status' });
       }
   
-      console.log(materials)
-      res.status(200).json(materials); 
+      res.status(200).json(materials);
     } catch (error) {
       console.error('Error fetching materials:', error);
       res.status(500).json({ message: 'Server error. Please try again later.' });
     }
   });
+  
+
+  router.get('/pending-material-requests/details',authenticate, async (req, res) => {
+    const ticketId = req.query['ticket-id'];
+    console.log('req.query: ', req.query);
+    console.log('ticketId: ', ticketId);
+  
+    try {
+      const request = await MaterialRequest.findOne({ where: { ticket_id: ticketId } });
+      const items = await MaterialRequestItem.findAll({ where: { ticket_id: ticketId } });
+  
+      res.json({ request, items });
+    } catch (err) {
+      res.status(500).json({ message: 'Server error', error: err });
+    }
+  });
+
+
+  router.put('/pending-material-requests/update-status',upload.single('file'),authenticate, async (req, res) => {
+    try {
+    
+      const { ticket_id, status, remarks,status_track} = req.body;
+      console.log('req.body: ', req.body);
+   
+
+   
+      const request = await MaterialRequest.findOne({ where: { ticket_id } });
+  
+      if (!request) {
+        return res.status(404).json({ message: 'Request not found' });
+      }
+
+
+      if(req.file){
+        request.attachment=req.file.filename
+      }
+      request.status = status;
+      request.remarks = remarks;
+      request.status_track=status_track,
+   
+      await request.save();
+  
+      res.json({ message: 'Status updated successfully' });
+    } catch (error) {
+      console.error('Error updating status:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+  
   
 module.exports = router;

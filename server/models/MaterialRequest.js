@@ -25,6 +25,12 @@ const sequelize = require('../db/config');
       delivery_place: {
         type: DataTypes.STRING,
       },
+      remarks: {
+        type: DataTypes.STRING,
+      },
+      attachment: {
+        type: DataTypes.STRING,
+      },
       status: {
         type: DataTypes.TINYINT,
         defaultValue: 1,
