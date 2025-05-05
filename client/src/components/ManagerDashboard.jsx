@@ -9,8 +9,8 @@ const ManagerDashboard = () => {
         <div className="container">
             <div className="row">
                 <div className="col-md-6">
-                    <div className="container rounded-top-2 box_sdw11">
-                        <div className="row bg-b text-light rounded-top-2">
+                    <div className="container  box_sdw11">
+                        <div className="row bg-b text-light">
                             <div className="col-12 py-2 f_13 fw-semibold text-center">
                                 Material Requests
                             </div>
@@ -19,13 +19,13 @@ const ManagerDashboard = () => {
                             <div className="col-12 py-2 f_14 fw-semibold text-start">
                                 <div className="container mt-2">
                                     <Link to='/dashboard/manager/pending-material-requests' className='text-decoration-none'>
-                                 <div className="row bg-primary bg-g rounded-2 py-1 my-2  text-light">
+                                 <div className="row bg-primary bg-g rounded-2 py-2 my-2  text-light">
                                     <div className="col-md-12">
                                     Pending Material Requests
                                     </div>
                                  </div>
                                     </Link>
-                                 <div className="row bg-primary bg-g rounded-2  py-1 my-2 text-light">
+                                 <div className="row bg-primary bg-g rounded-2  py-2 my-2 text-light">
                                     <div className="col-md-12 f_14 fw-semibold">
                                     Account Details
                                     </div>

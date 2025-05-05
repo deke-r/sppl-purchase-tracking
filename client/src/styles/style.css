@@ -94,3 +94,31 @@
   .text-danger{
     color: #CC0001 !important;
   }
+
+  .navbar-toggler-icon{
+    background-image: url('../assets/images/menuWhite.svg') !important;
+}
+
+.navbar-toggler{
+  box-shadow: none !important;
+  border-radius: 0px !important;
+  border: none !important;
+  outline: none !important;
+  padding: 6px 7px !important;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0C4379; 
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: white; 
+  border-radius: 0px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}

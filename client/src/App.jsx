@@ -7,6 +7,7 @@ import PendingMaterialRequests from './pages/Manager/PendingMaterialRequests';
 import DetailPendingMaterial from './pages/Manager/DetailPendingMaterial';
 import PendingMaterialReqPurchase from './pages/Purchase/PendingMaterialReqPurchase';
 import DetailPendMaterialPurc from './pages/Purchase/DetailPendMaterialPurc';
+import PrivateRoute from './utils/PrivateRoute';
 
 const App = () => {
   return (
@@ -14,9 +15,15 @@ const App = () => {
       <Routes>
  
         <Route path="/" element={<Login />} />
-        
+      
 
-        <Route element={<MainLayout />}>
+        <Route
+          element={
+            <PrivateRoute>
+              <MainLayout />
+            </PrivateRoute>
+          }
+        >
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/employee/request-for-material" element={<RequestMaterial />} />
           <Route path="/dashboard/manager/pending-material-requests" element={<PendingMaterialRequests />} />
